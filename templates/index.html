@@ -1,111 +1,53 @@
 <!DOCTYPE html>
-<html lang='ar' dir='rtl'>
+<html lang="ar" dir="rtl">
 <head>
-    <meta charset='UTF-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>كرنفال | CARNIVAL</title>
-    <script src='https://cdn.tailwindcss.com'></script>
-    <link href='https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap' rel='stylesheet'>
-    <style>body { font-family: 'Cairo', sans-serif; background-color: #0b0f19; color: #f3f4f6; }</style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class='min-h-screen flex flex-col justify-between'>
-    <header class='border-b border-amber-500/20 bg-[#111827] px-6 h-20 flex items-center justify-between sticky top-0 z-40 shadow-xl'>
-        <span class='text-xl font-black text-amber-400 tracking-wider'>CARNIVAL | كرنفال</span>
-        <a href='/admin' class='text-xs bg-amber-600 hover:bg-amber-500 text-white px-3 py-2 rounded-xl font-bold transition shadow'>⚙️ لوحة التحكم</a>
+<body class="bg-slate-900 text-white min-h-screen">
+    <header class="p-4 flex justify-between items-center border-b border-slate-800">
+        <h1 class="text-xl font-bold text-amber-400">CARNIVAL | كرنفال</h1>
+        <a href="/admin" class="bg-amber-500 text-slate-900 px-4 py-2 rounded-lg font-bold text-sm">لوحة التحكم</a>
     </header>
 
-    <main class='max-w-6xl mx-auto px-4 py-8 w-full'>
-        <h3 class='text-amber-400 font-bold text-base mb-4 border-r-4 border-amber-500 pr-3'>المنتجات المتاحة</h3>
-        
-        {% if data.products|length == 0 %}
-        <div class='text-center py-20 bg-[#111827] border border-amber-500/20 rounded-3xl'>
-            <p class='text-gray-400 text-sm mb-2'>لا توجد منتجات معروضة حالياً.</p>
-            <a href='/admin' class='text-amber-400 text-xs font-bold underline'>توجه إلى لوحة التحكم لإضافة أول منتج ⚡</a>
-        </div>
-        {% else %}
-        <div class='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4'>
-            {% for p in data.products %}
-            <div onclick='openOrderModal("{{ p.name }}", "{{ p.price }}", "{{ p.type }}")' class='bg-[#111827] border border-amber-500/20 rounded-2xl p-3 hover:border-amber-500 transition shadow-xl cursor-pointer flex flex-col justify-between'>
-                <div>
-                    <div class='w-full h-40 bg-gray-900 rounded-xl overflow-hidden mb-3 border border-amber-500/30 relative'>
-                        <img src='{{ p.image }}' class='w-full h-full object-cover'>
-                        <span class='absolute top-2 right-2 text-[10px] bg-red-600 text-white px-2 py-0.5 rounded font-bold'>{{ p.type }}</span>
+    <!-- شريط الفئات بالأعلى -->
+    <div class="flex overflow-x-auto gap-2 p-4 bg-slate-800/50 scrollbar-none">
+        <a href="/?category=الكل" class="px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap {{ 'bg-amber-500 text-slate-900' if current_category == 'الكل' else 'bg-slate-800 text-slate-300' }}">الكل</a>
+        <a href="/?category=رجالي" class="px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap {{ 'bg-amber-500 text-slate-900' if current_category == 'رجالي' else 'bg-slate-800 text-slate-300' }}">رجالي</a>
+        <a href="/?category=نسائية" class="px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap {{ 'bg-amber-500 text-slate-900' if current_category == 'نسائية' else 'bg-slate-800 text-slate-300' }}">نسائية</a>
+        <a href="/?category=أطفال" class="px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap {{ 'bg-amber-500 text-slate-900' if current_category == 'أطفال' else 'bg-slate-800 text-slate-300' }}">أطفال</a>
+        <a href="/?category=أحذية" class="px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap {{ 'bg-amber-500 text-slate-900' if current_category == 'أحذية' else 'bg-slate-800 text-slate-300' }}">أحذية</a>
+        <a href="/?category=منتجات أخرى" class="px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap {{ 'bg-amber-500 text-slate-900' if current_category == 'منتجات أخرى' else 'bg-slate-800 text-slate-300' }}">منتجات أخرى</a>
+    </div>
+
+    <main class="p-4 max-w-4xl mx-auto">
+        <h2 class="text-lg font-semibold mb-4 text-amber-400">المنتجات المتاحة</h2>
+        {% if products %}
+            <div class="grid grid-cols-2 gap-4">
+                {% for p in products %}
+                <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col justify-between">
+                    <img src="{{ p.image }}" class="w-full h-36 object-cover rounded-lg mb-2">
+                    <div>
+                        <h3 class="font-bold text-sm truncate">{{ p.name }}</h3>
+                        <p class="text-amber-400 font-bold text-sm my-1">{{ p.price }}</p>
+                        <span class="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded">{{ p.category }}</span>
                     </div>
-                    <h4 class='text-white font-bold text-xs mb-1 truncate'>{{ p.name }}</h4>
+                    <a href="https://wa.me/{{ whatsapp }}?text=مرحباً، اريد طلب المنتج: {{ p.name }} - السعر: {{ p.price }}" target="_blank" class="mt-3 block text-center bg-green-600 text-white py-1.5 rounded-lg text-xs font-bold">طلب عبر الواتساب</a>
                 </div>
-                <div class='flex items-center justify-between mt-2'>
-                    <span class='text-amber-400 font-black text-sm'>{{ p.price }}</span>
-                    <span class='text-[10px] bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded-lg font-bold'>اطلب الآن</span>
-                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
-        </div>
+        {% else %}
+            <div class="text-center py-16 bg-slate-800/40 rounded-2xl border border-slate-800">
+                <p class="text-slate-400 mb-2">لا توجد منتجات معروضة حالياً في هذا القسم.</p>
+                <a href="/admin" class="text-amber-400 font-bold text-sm">توجه إلى لوحة التحكم لإضافة أول منتج ⚡</a>
+            </div>
         {% endif %}
     </main>
 
-    <div id='orderModal' class='fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4'>
-        <div class='bg-[#111827] border border-amber-500/50 rounded-3xl p-6 w-full max-w-md shadow-2xl relative'>
-            <button onclick='closeOrderModal()' class='absolute top-4 left-4 text-gray-400 hover:text-white font-bold text-lg'>✕</button>
-            <h3 class='text-amber-400 font-bold text-base mb-1' id='modalTitle'>إتمام طلب الشراء</h3>
-            <p class='text-gray-400 text-xs mb-4'>أدخل تفاصيلك ليتم تحويلك مباشرة عبر واتساب</p>
-            
-            <form id='orderForm' onsubmit='sendToWhatsApp(event)'>
-                <input type='hidden' id='prodName'>
-                <input type='hidden' id='prodPrice'>
-                
-                <div class='mb-3'>
-                    <label class='block text-xs text-gray-300 mb-1'>النوع / المواصفات:</label>
-                    <input type='text' id='clientType' required class='w-full bg-[#0b0f19] border border-amber-500/30 rounded-xl p-2.5 text-xs text-white'>
-                </div>
-                <div class='mb-3'>
-                    <label class='block text-xs text-gray-300 mb-1'>العنوان:</label>
-                    <input type='text' id='clientAddress' required placeholder='المدينة / المنطقة' class='w-full bg-[#0b0f19] border border-amber-500/30 rounded-xl p-2.5 text-xs text-white'>
-                </div>
-                <div class='mb-3'>
-                    <label class='block text-xs text-gray-300 mb-1'>الكمية:</label>
-                    <input type='number' id='clientQty' value='1' min='1' required class='w-full bg-[#0b0f19] border border-amber-500/30 rounded-xl p-2.5 text-xs text-white'>
-                </div>
-                <div class='mb-4'>
-                    <label class='block text-xs text-gray-300 mb-1'>رقم الهاتف:</label>
-                    <input type='tel' id='clientPhone' required placeholder='07700000000' class='w-full bg-[#0b0f19] border border-amber-500/30 rounded-xl p-2.5 text-xs text-white'>
-                </div>
-                <button type='submit' class='w-full py-3 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-500 text-white text-xs shadow-lg'>💬 إرسال الطلب عبر الواتساب</button>
-            </form>
-        </div>
-    </div>
-
-    <footer class='text-center py-6 text-xs text-gray-500 border-t border-gray-900 mt-10'>
-        CARNIVAL Store © 2026 - إدارة أبو سليم
+    <footer class="text-center py-6 text-xs text-slate-500 border-t border-slate-800 mt-10">
+        CARNIVAL Store © 2026
     </footer>
-
-    <script>
-        const storeWhatsApp = "{{ data.whatsapp }}";
-        function openOrderModal(name, price, type) {
-            document.getElementById('modalTitle').innerText = 'طلب: ' + name;
-            document.getElementById('prodName').value = name;
-            document.getElementById('prodPrice').value = price;
-            document.getElementById('clientType').value = type;
-            document.getElementById('orderModal').classList.remove('hidden');
-        }
-        function closeOrderModal() { document.getElementById('orderModal').classList.add('hidden'); }
-        function sendToWhatsApp(e) {
-            e.preventDefault();
-            const name = document.getElementById('prodName').value;
-            const price = document.getElementById('prodPrice').value;
-            const type = document.getElementById('clientType').value;
-            const address = document.getElementById('clientAddress').value;
-            const qty = document.getElementById('clientQty').value;
-            const phone = document.getElementById('clientPhone').value;
-            const msg =  +
-                         +
-                         +
-                         +
-                         +
-                         +
-                        ;
-            window.open(, '_blank');
-            closeOrderModal();
-        }
-    </script>
 </body>
 </html>

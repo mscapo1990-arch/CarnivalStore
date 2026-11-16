@@ -1,8 +1,10 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
+app.secret_key = 'carnival_secret_key_123'
+
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -12,6 +14,10 @@ store_data = {
     "products": []
 }
 
+# بيانات الدخول الخاصة بك
+ADMIN_USER = "admin"
+ADMIN_PASS = "admin123"
+
 @app.route('/')
 def index():
     category = request.args.get('category', 'الكل')
@@ -20,8 +26,27 @@ def index():
         products = [p for p in products if p.get('category') == category]
     return render_template('index.html', products=products, whatsapp=store_data["whatsapp"], current_category=category)
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        if request.form.get('username') == ADMIN_USER and request.form.get('password') == ADMIN_PASS:
+            session['logged_in'] = True
+            return redirect(url_for('admin'))
+        else:
+            error = 'اسم المستخدم أو كلمة المرور غير صحيحة!'
+    return render_template('login.html', error=error)
+
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    return redirect(url_for('login'))
+
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+        
     if request.method == 'POST':
         action = request.form.get('action')
         if action == 'update_whatsapp':

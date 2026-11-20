@@ -1,4 +1,8 @@
 import os
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+import os
 import random
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.utils import secure_filename

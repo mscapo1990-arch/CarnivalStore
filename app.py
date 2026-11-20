@@ -102,5 +102,43 @@ def admin():
             })
     return render_template('admin.html', store_data=store_data)
 
+
+@app.route('/toggle_status/<int:pid>', methods=['POST'])
+def toggle_status(pid):
+    conn = get_db()
+    row = conn.execute("SELECT status FROM products WHERE id = ?", (pid,)).fetchone()
+    if row:
+        current = row['status'] if 'status' in row.keys() else 'متوفر'
+        new_status = 'تم البيع' if current == 'متوفر' else 'متوفر'
+        conn.execute("UPDATE products SET status = ? WHERE id = ?", (new_status, pid))
+        conn.commit()
+    conn.close()
+    return redirect(request.referrer or '/admin')
+
+@app.route('/delete_product/<int:pid>', methods=['POST'])
+def delete_product(pid):
+    conn = get_db()
+    conn.execute("DELETE FROM products WHERE id = ?", (pid,))
+    conn.commit()
+    conn.close()
+    return redirect(request.referrer or '/admin')
+
+@app.route('/edit_product/<int:pid>', methods=['POST'])
+def edit_product_route(pid):
+    name = request.form.get('name', '').strip()
+    price = request.form.get('price', '').strip()
+    category = request.form.get('category', '').strip()
+    status = request.form.get('status', 'متوفر').strip()
+    details = request.form.get('details', '').strip()
+    conn = get_db()
+    if name and price:
+        conn.execute(
+            "UPDATE products SET name=?, price=?, category=?, status=?, details=? WHERE id=?",
+            (name, price, category, status, details, pid)
+        )
+        conn.commit()
+    conn.close()
+    return redirect(request.referrer or '/admin')
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

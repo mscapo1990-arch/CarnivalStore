@@ -1,4 +1,5 @@
 import os
+import random
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.utils import secure_filename
 
@@ -14,9 +15,17 @@ store_data = {
     "products": []
 }
 
-# بيانات الدخول الخاصة بك
 ADMIN_USER = "admin"
 ADMIN_PASS = "admin123"
+
+# قائمة الجوائز في عجلة الحظ
+WHEEL_PRIZES = [
+    {"id": 1, "name": "100 ماسة 💎", "chance": 10},
+    {"id": 2, "name": "هدية وردة 🌹", "chance": 30},
+    {"id": 3, "name": "إطار مميز 👑", "chance": 5},
+    {"id": 4, "name": "حظ أوفر 😢", "chance": 45},
+    {"id": 5, "name": "500 نقطة ⭐", "chance": 10}
+]
 
 @app.route('/')
 def index():
@@ -25,6 +34,23 @@ def index():
     if category != 'الكل':
         products = [p for p in products if p.get('category') == category]
     return render_template('index.html', products=products, whatsapp=store_data["whatsapp"], current_category=category)
+
+@app.route('/wheel')
+def wheel_page():
+    return render_template('wheel.html')
+
+@app.route('/api/spin-wheel', methods=['POST'])
+def spin_wheel():
+    prizes_pool = []
+    for prize in WHEEL_PRIZES:
+        prizes_pool.extend([prize] * prize['chance'])
+    
+    won_prize = random.choice(prizes_pool)
+    return {
+        "status": "success",
+        "prize": won_prize,
+        "message": f"مبروك يا أبو سليم! لقد ربحت: {won_prize['name']}"
+    }
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عجلة الحظ | كرنفال</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 w-full max-w-sm text-center shadow-2xl">
+        <h1 class="text-xl font-bold text-amber-400 mb-2">🎡 عجلة الحظ السريعة</h1>
+        <p class="text-xs text-slate-400 mb-6">جرب حظك واربح جوائز وهدايا فورية لغرفتك!</p>
+
+        <!-- شكل العجلة -->
+        <div id="wheel-box" class="w-48 h-48 mx-auto rounded-full border-4 border-amber-400 flex items-center justify-center bg-slate-900 mb-6 transition-all duration-700 shadow-inner">
+            <span id="wheel-text" class="text-sm font-bold text-amber-300">اضغط للدوران</span>
+        </div>
+
+        <button onclick="spinWheel()" id="spin-btn" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-900 py-3 rounded-xl font-bold text-sm shadow-lg active:scale-95 transition">
+            تدوير العجلة (10 عملات) ⚡
+        </button>
+        
+        <div id="result-box" class="mt-4 text-sm font-bold text-green-400 bg-slate-900/60 p-3 rounded-xl border border-slate-700 hidden"></div>
+        
+        <div class="mt-6">
+            <a href="/" class="text-xs text-slate-400 hover:text-amber-400">← العودة إلى المتجر الرئيسي</a>
+        </div>
+    </div>
+
+    <script>
+    function spinWheel() {
+        const wheelBox = document.getElementById('wheel-box');
+        const wheelText = document.getElementById('wheel-text');
+        const resultBox = document.getElementById('result-box');
+        const spinBtn = document.getElementById('spin-btn');
+        
+        spinBtn.disabled = true;
+        wheelText.innerHTML = "جاري الدوران... 🌀";
+        wheelBox.style.transform = "rotate(720deg)";
+        resultBox.style.display = "none";
+        
+        fetch('/api/spin-wheel', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            setTimeout(() => {
+                wheelBox.style.transform = "rotate(0deg)";
+                wheelText.innerHTML = "اضغط للدوران";
+                resultBox.style.display = "block";
+                resultBox.innerHTML = data.message;
+                spinBtn.disabled = false;
+            }, 800);
+        });
+    }
+    </script>
+</body>
+</html>

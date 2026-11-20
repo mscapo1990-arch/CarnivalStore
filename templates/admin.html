@@ -77,5 +77,15 @@
   </form>
 </div>
 
+
+<div id="kayan-quick-bar" style="margin-top:14px;padding:10px;border-radius:10px;border:1px solid #334155;background:#1e293b;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+  <form method="POST" action="/toggle_status/1" style="margin:0;">
+    <button type="submit" style="padding:7px 12px;border-radius:8px;border:none;background:#10b981;color:#fff;font-weight:bold;cursor:pointer;">تبديل متوفر / تم البيع</button>
+  </form>
+  <form method="POST" action="/delete_product/1" style="margin:0;" onsubmit="return confirm('تأكيد الحذف؟');">
+    <button type="submit" style="padding:7px 12px;border-radius:8px;border:none;background:#ef4444;color:#fff;font-weight:bold;cursor:pointer;">حذف منتج</button>
+  </form>
+</div>
+
 </body>
 </html>

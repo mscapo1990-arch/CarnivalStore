@@ -142,5 +142,13 @@ def delete_product(pid):
         print("delete_product error:", e)
     return redirect(request.referrer or '/admin')
 
+
+@app.route('/uploads/<path:filename>')
+def serve_upload(filename):
+    from flask import send_from_directory
+    import os
+    base = os.path.abspath(os.path.dirname(__file__))
+    return send_from_directory(os.path.join(base, 'static', 'uploads'), filename)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

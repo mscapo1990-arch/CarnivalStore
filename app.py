@@ -94,7 +94,7 @@ def admin():
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 image_url = url_for('static', filename=f'uploads/{filename}')
-            _load_store_state()
+                _load_store_state()
                 store_data["products"].append({
                 "id": len(store_data["products"]) + 1,
                 "name": name,

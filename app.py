@@ -1,29 +1,35 @@
 import os
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+import os
+import random
+from flask import Flask, render_template, request, redirect, url_for, session
+from werkzeug.utils import secure_filename
 
-from flask import redirect, url_for, Flask, session
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "carnival-store-secret-2026")
+app.secret_key = 'carnival_secret_key_123'
 
-def _load_admin_products():
-    import os, glob, sqlite3
-    base = os.path.abspath(os.path.dirname(__file__))
-    candidates = glob.glob(os.path.join(base, "*.db")) + glob.glob(os.path.join(base, "**", "*.db"), recursive=True)
-    for db_file in dict.fromkeys(candidates):
-        try:
-            c = sqlite3.connect(db_file)
-            c.row_factory = sqlite3.Row
-            cur = c.cursor()
-            tables = [r[0] for r in cur.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
-            for t in tables:
-                if any(k in t.lower() for k in ("product", "item", "good")):
-                    rows = cur.execute(f"SELECT * FROM {t} ORDER BY rowid DESC").fetchall()
-                    if rows:
-                        c.close()
-                        return [dict(r) for r in rows]
-            c.close()
-        except Exception:
-            pass
-    return []
+UPLOAD_FOLDER = 'static/uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+store_data = {
+    "whatsapp": "9647700000000",
+    "products": []
+}
+
+ADMIN_USER = "admin"
+ADMIN_PASS = "admin123"
+
+# قائمة الجوائز في عجلة الحظ
+WHEEL_PRIZES = [
+    {"id": 1, "name": "100 ماسة 💎", "chance": 10},
+    {"id": 2, "name": "هدية وردة 🌹", "chance": 30},
+    {"id": 3, "name": "إطار مميز 👑", "chance": 5},
+    {"id": 4, "name": "حظ أوفر 😢", "chance": 45},
+    {"id": 5, "name": "500 نقطة ⭐", "chance": 10}
+]
 
 @app.route('/')
 def index():
@@ -94,7 +100,7 @@ def admin():
                 "image": image_url,
                 "desc": desc
             })
-    return render_template('admin.html', products=_load_admin_products(), store_data=store_data)
+    return render_template('admin.html', store_data=store_data)
 
 
 @app.route('/toggle_status/<int:pid>', methods=['POST'])
@@ -178,11 +184,6 @@ def delete_product_item(pid):
     except Exception as e:
         print("delete err:", e)
     return redirect(request.referrer or '/admin')
-
-
-@app.errorhandler(500)
-def handle_500_err(e):
-    return f"<h3>تنبيه في التطبيق</h3><pre>{e}</pre>", 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

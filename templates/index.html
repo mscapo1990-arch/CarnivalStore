@@ -18,7 +18,7 @@
 <div id="carnival-banner-slider" class="relative w-full max-w-4xl mx-auto mt-3 px-4">
   <div class="relative overflow-hidden rounded-2xl border border-amber-500/40 bg-slate-800 h-36 sm:h-48 shadow-lg">
     {% for b_img in banner_images %}
-    <img src="{{ b_img }}" class="carnival-slide w-full h-full object-cover absolute inset-0 transition-all duration-700 ease-in-out {{ 'opacity-100 scale-100' if loop.first else 'opacity-0 scale-105 pointer-events-none' }}" alt="بنر كرنفال">
+    <img src="{{ b_img }}" onerror="this.onerror=null;this.src='/store-image';" class="carnival-slide w-full h-full object-cover absolute inset-0 transition-all duration-700 ease-in-out {{ 'opacity-100 scale-100' if loop.first else 'opacity-0 scale-105 pointer-events-none' }}" alt="بنر كرنفال">
     {% endfor %}
   </div>
 </div>

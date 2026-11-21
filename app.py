@@ -601,7 +601,7 @@ def _load_store_state():
             with open(_STORE_JSON_PATH, "r", encoding="utf-8") as f:
                 data = json.load(f)
             if isinstance(data, dict):
-                if isinstance(data.get("products"), list):
+                if isinstance(data.get("products"), list) and len(data["products"]) > 0:
                     store_data["products"] = data["products"]
                 if isinstance(data.get("banner_images"), list):
                     store_data["banner_images"] = data["banner_images"]
@@ -618,5 +618,23 @@ def _sync_store_before_request():
         _load_store_state()
 
 _load_store_state()
+
+@app.route('/store-image')
+@app.route('/store-image/<path:subpath>')
+def store_any_image(subpath=None):
+    from flask import send_from_directory
+    base = os.path.abspath(os.path.dirname(__file__))
+    up = os.path.join(base, 'static', 'uploads')
+    os.makedirs(up, exist_ok=True)
+    if subpath:
+        clean_name = os.path.basename(subpath.split('?')[0])
+        if clean_name and os.path.isfile(os.path.join(up, clean_name)):
+            return send_from_directory(up, clean_name)
+    files = [f for f in os.listdir(up) if os.path.isfile(os.path.join(up, f))]
+    if files:
+        files.sort(key=lambda x: os.path.getmtime(os.path.join(up, x)), reverse=True)
+        return send_from_directory(up, files[0])
+    return '', 404
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

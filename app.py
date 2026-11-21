@@ -379,8 +379,8 @@ from functools import wraps
 from flask import session, render_template_string
 
 app.secret_key = os.environ.get("CARNIVAL_SECRET_KEY", "carnival_store_secret_key_2026")
-ADMIN_USERNAME = os.environ.get("CARNIVAL_ADMIN_USER", "admin")
-ADMIN_PASSWORD = os.environ.get("CARNIVAL_ADMIN_PASS", "Carnival@2026")
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "123456"
 
 def admin_required(f):
     @wraps(f)

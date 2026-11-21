@@ -1,4 +1,7 @@
 
+from flask import Flask
+app = Flask(__name__)
+
 def _load_admin_products():
     import os, glob, sqlite3
     base = os.path.abspath(os.path.dirname(__file__))

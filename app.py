@@ -33,6 +33,7 @@ WHEEL_PRIZES = [
 
 @app.route('/')
 def index():
+    _load_store_state()
     category = request.args.get('category', 'الكل')
     products = store_data["products"]
     if category != 'الكل':
@@ -74,6 +75,7 @@ def logout():
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
+    _load_store_state()
     if not session.get('logged_in'):
         return redirect(url_for('login'))
         
@@ -92,7 +94,8 @@ def admin():
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 image_url = url_for('static', filename=f'uploads/{filename}')
-            store_data["products"].append({
+            _load_store_state()
+                store_data["products"].append({
                 "id": len(store_data["products"]) + 1,
                 "name": name,
                 "price": price,
@@ -494,6 +497,7 @@ def admin_dashboard():
                     "whatsapp": prod_wa,
                     "image": img_url
                 })
+                _save_store_state()
                 store_data["products"] = prods
                 _save_store_state()
             return redirect('/admin')

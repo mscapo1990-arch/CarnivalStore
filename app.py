@@ -95,14 +95,14 @@ def admin():
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 image_url = url_for('static', filename=f'uploads/{filename}')
             _load_store_state()
-                store_data["products"].append({
-                "id": len(store_data["products"]) + 1,
-                "name": name,
-                "price": price,
-                "category": category,
-                "image": image_url,
-                "desc": desc
-            })
+            store_data["products"].append({
+            "id": len(store_data["products"]) + 1,
+            "name": name,
+            "price": price,
+            "category": category,
+            "image": image_url,
+            "desc": desc
+        })
     return render_template('admin.html', store_data=store_data)
 
 

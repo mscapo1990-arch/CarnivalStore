@@ -185,5 +185,56 @@ def delete_product_item(pid):
         print("delete err:", e)
     return redirect(request.referrer or '/admin')
 
+
+def kayan_next_odd_id():
+    import os, glob, sqlite3
+    base = os.path.abspath(os.path.dirname(__file__))
+    for db in dict.fromkeys(glob.glob(os.path.join(base, "*.db")) + glob.glob(os.path.join(base, "**", "*.db"), recursive=True)):
+        try:
+            if not os.path.exists(db) or os.path.getsize(db) == 0:
+                continue
+            c = sqlite3.connect(db)
+            cur = c.cursor()
+            tables = [r[0] for r in cur.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+            max_odd = -1
+            for t in tables:
+                if "product" in t.lower():
+                    cols = [x[1] for x in cur.execute(f"PRAGMA table_info({t})").fetchall()]
+                    if "code" in cols:
+                        for (val,) in cur.execute(f"SELECT code FROM {t}").fetchall():
+                            s = str(val or "").strip()
+                            if s.isdigit():
+                                n = int(s)
+                                if n % 2 == 1 and n > max_odd:
+                                    max_odd = n
+            c.close()
+            return str(max_odd + 2 if max_odd >= 1 else 1)
+        except Exception:
+            continue
+    return "1"
+
+@app.route('/admin/save_banner', methods=['POST'])
+def kayan_save_banner():
+    import os, glob, sqlite3
+    banner_text = (request.form.get('banner_text') or '').strip()
+    base = os.path.abspath(os.path.dirname(__file__))
+    for db in dict.fromkeys(glob.glob(os.path.join(base, "*.db")) + glob.glob(os.path.join(base, "**", "*.db"), recursive=True)):
+        try:
+            if not os.path.exists(db):
+                continue
+            c = sqlite3.connect(db)
+            cur = c.cursor()
+            cur.execute("CREATE TABLE IF NOT EXISTS ad_banners (id INTEGER PRIMARY KEY AUTOINCREMENT, banner_text TEXT DEFAULT '')")
+            existing = cur.execute("SELECT id FROM ad_banners LIMIT 1").fetchone()
+            if existing:
+                cur.execute("UPDATE ad_banners SET banner_text = ? WHERE id = ?", (banner_text, existing[0]))
+            else:
+                cur.execute("INSERT INTO ad_banners (banner_text) VALUES (?)", (banner_text,))
+            c.commit()
+            c.close()
+        except Exception:
+            pass
+    return redirect(request.referrer or '/admin')
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -35,6 +35,7 @@ WHEEL_PRIZES = [
 def index():
     _load_abs_state()
     _load_abs_state()
+    _load_abs_state()
     category = request.args.get('category', 'الكل')
     products = store_data["products"]
     if category != 'الكل':
@@ -77,6 +78,7 @@ def logout():
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
+    _load_abs_state()
     _load_abs_state()
     if not session.get('logged_in'):
         return redirect(url_for('login'))
@@ -712,5 +714,45 @@ def _load_abs_state():
         pass
 
 _load_abs_state()
+
+def _append_product_from_form(form, files):
+    name = (form.get("name") or form.get("product_name") or form.get("title") or "").strip()
+    if not name:
+        return False
+    price = (form.get("price") or "0$").strip() or "0$"
+    category = (form.get("category") or "عام").strip() or "عام"
+    wa = (form.get("whatsapp") or form.get("product_whatsapp") or store_data.get("whatsapp") or "").strip()
+
+    img_url = ""
+    f = files.get("image") or files.get("product_image") or files.get("file")
+    if f and getattr(f, "filename", ""):
+        from werkzeug.utils import secure_filename
+        import time
+        up_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "uploads")
+        os.makedirs(up_dir, exist_ok=True)
+        safe = secure_filename(f.filename) or "product.jpg"
+        fname = f"{int(time.time())}_{safe}"
+        f.save(os.path.join(up_dir, fname))
+        img_url = f"/static/uploads/{fname}"
+
+    _load_abs_state()
+    prods = store_data.get("products")
+    if not isinstance(prods, list):
+        prods = []
+        store_data["products"] = prods
+
+    next_id = max([int(p.get("id", 0)) for p in prods if isinstance(p, dict)] + [0]) + 1
+    prods.append({
+        "id": next_id,
+        "name": name,
+        "price": price,
+        "category": category,
+        "whatsapp": wa,
+        "image": img_url,
+        "status": "نشط"
+    })
+    _save_abs_state()
+    return True
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -64,7 +64,7 @@ def _save_uploaded_file(file_storage, prefix="img"):
 def _is_logged_in():
     return bool(session.get("admin_logged_in"))
 
-@app.route("/")
+@app.route("/", methods=['GET', 'POST'])
 def index():
     _load_state()
     category = (request.args.get("category") or "").strip()
@@ -82,12 +82,12 @@ def index():
         current_category=category or "الكل"
     )
 
-@app.route("/wheel")
+@app.route("/wheel", methods=['GET', 'POST'])
 def wheel():
     return render_template("wheel.html")
 
-@app.route("/login", methods=["GET", "POST"])
-@app.route("/admin/login", methods=["GET", "POST"])
+@app.route("/login", methods=['GET', 'POST'])
+@app.route("/admin/login", methods=['GET', 'POST'])
 def login():
     error = None
     if request.method == "POST":
@@ -99,13 +99,13 @@ def login():
         error = "اسم المستخدم أو كلمة المرور غير صحيحة"
     return render_template("login.html", error=error)
 
-@app.route("/logout")
-@app.route("/admin/logout")
+@app.route("/logout", methods=['GET', 'POST'])
+@app.route("/admin/logout", methods=['GET', 'POST'])
 def logout():
     session.pop("admin_logged_in", None)
     return redirect("/login")
 
-@app.route("/admin", methods=["GET", "POST"])
+@app.route("/admin", methods=['GET', 'POST'])
 def admin():
     if not _is_logged_in():
         return redirect("/login")
@@ -145,7 +145,7 @@ def admin():
 
     return render_template("admin.html", store_data=store_data, products=store_data.get("products", []), whatsapp=store_data.get("whatsapp", ""), banner_images=store_data.get("banner_images", []))
 
-@app.route("/admin/add_product", methods=["POST"])
+@app.route("/admin/add_product", methods=['GET', 'POST'])
 def add_product():
     if not _is_logged_in():
         return redirect("/login")
@@ -176,8 +176,8 @@ def add_product():
         _save_state()
     return redirect("/admin")
 
-@app.route("/toggle_status/<int:pid>", methods=["POST"])
-@app.route("/admin/toggle_status/<int:pid>", methods=["POST"])
+@app.route("/toggle_status/<int:pid>", methods=['GET', 'POST'])
+@app.route("/admin/toggle_status/<int:pid>", methods=['GET', 'POST'])
 def toggle_status(pid):
     if not _is_logged_in():
         return redirect("/login")
@@ -189,8 +189,8 @@ def toggle_status(pid):
     _save_state()
     return redirect("/admin")
 
-@app.route("/delete_product/<int:pid>", methods=["POST"])
-@app.route("/admin/delete_product/<int:pid>", methods=["POST"])
+@app.route("/delete_product/<int:pid>", methods=['GET', 'POST'])
+@app.route("/admin/delete_product/<int:pid>", methods=['GET', 'POST'])
 def delete_product(pid):
     if not _is_logged_in():
         return redirect("/login")
@@ -199,7 +199,7 @@ def delete_product(pid):
     _save_state()
     return redirect("/admin")
 
-@app.route("/admin/banner/upload", methods=["POST"])
+@app.route("/admin/banner/upload", methods=['GET', 'POST'])
 def banner_upload():
     if not _is_logged_in():
         return redirect("/login")
@@ -216,7 +216,7 @@ def banner_upload():
     _save_state()
     return redirect("/admin")
 
-@app.route("/admin/banner/delete", methods=["POST"])
+@app.route("/admin/banner/delete", methods=['GET', 'POST'])
 def banner_delete():
     if not _is_logged_in():
         return redirect("/login")
@@ -230,16 +230,16 @@ def banner_delete():
     _save_state()
     return redirect("/admin")
 
-@app.route("/uploads/<path:filename>")
-@app.route("/static/uploads/<path:filename>")
+@app.route("/uploads/<path:filename>", methods=['GET', 'POST'])
+@app.route("/static/uploads/<path:filename>", methods=['GET', 'POST'])
 def serve_upload(filename):
     clean = os.path.basename(filename.split("?")[0])
     if clean and os.path.isfile(os.path.join(UPLOAD_DIR, clean)):
         return send_from_directory(UPLOAD_DIR, clean)
     return store_any_image(clean)
 
-@app.route("/store-image")
-@app.route("/store-image/<path:subpath>")
+@app.route("/store-image", methods=['GET', 'POST'])
+@app.route("/store-image/<path:subpath>", methods=['GET', 'POST'])
 def store_any_image(subpath=None):
     if subpath:
         clean = os.path.basename(subpath.split("?")[0])
@@ -250,6 +250,50 @@ def store_any_image(subpath=None):
         files.sort(key=lambda x: os.path.getmtime(os.path.join(UPLOAD_DIR, x)), reverse=True)
         return send_from_directory(UPLOAD_DIR, files[0])
     return "", 404
+
+
+@app.route('/admin/save_banner', methods=['GET', 'POST'])
+@app.route('/admin/banner/upload', methods=['GET', 'POST'])
+def _mna_banner_upload():
+    if not _is_logged_in():
+        return redirect('/login')
+    _load_state()
+    files = request.files.getlist('banner_images') or request.files.getlist('images') or request.files.getlist('image') or request.files.getlist('file')
+    imgs = store_data.get('banner_images')
+    if not isinstance(imgs, list):
+        imgs = []
+        store_data['banner_images'] = imgs
+    for f in files:
+        url = _save_uploaded_file(f, 'banner')
+        if url:
+            imgs.append(url)
+    _save_state()
+    return redirect('/admin')
+
+@app.route('/admin/banner/delete', methods=['GET', 'POST'])
+def _mna_banner_delete():
+    if not _is_logged_in():
+        return redirect('/login')
+    _load_state()
+    target = (request.form.get('image_url') or request.args.get('image_url') or request.form.get('url') or '').strip()
+    imgs = store_data.get('banner_images', [])
+    if target:
+        store_data['banner_images'] = [u for u in imgs if u != target]
+    elif imgs:
+        imgs.pop()
+    _save_state()
+    return redirect('/admin')
+
+@app.route('/admin/whatsapp', methods=['GET', 'POST'])
+def _mna_whatsapp():
+    if not _is_logged_in():
+        return redirect('/login')
+    _load_state()
+    wa = (request.form.get('whatsapp') or request.args.get('whatsapp') or '').strip()
+    if wa:
+        store_data['whatsapp'] = wa
+        _save_state()
+    return redirect('/admin')
 
 if __name__ == "__main__":
     app.run(debug=True)

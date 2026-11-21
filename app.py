@@ -1,53 +1,24 @@
 
 def _load_admin_products():
-    try:
-        import sqlite3
-        c = sqlite3.connect('store.db')
-        c.row_factory = sqlite3.Row
-        cur = c.cursor()
-        tables = [r[0] for r in cur.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
-        for t in tables:
-            if "product" in t.lower():
-                rows = cur.execute(f"SELECT * FROM {t} ORDER BY id DESC").fetchall()
-                c.close()
-                return [dict(r) for r in rows]
-        c.close()
-    except Exception:
-        pass
+    import os, glob, sqlite3
+    base = os.path.abspath(os.path.dirname(__file__))
+    candidates = glob.glob(os.path.join(base, "*.db")) + glob.glob(os.path.join(base, "**", "*.db"), recursive=True)
+    for db_file in dict.fromkeys(candidates):
+        try:
+            c = sqlite3.connect(db_file)
+            c.row_factory = sqlite3.Row
+            cur = c.cursor()
+            tables = [r[0] for r in cur.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+            for t in tables:
+                if any(k in t.lower() for k in ("product", "item", "good")):
+                    rows = cur.execute(f"SELECT * FROM {t} ORDER BY rowid DESC").fetchall()
+                    if rows:
+                        c.close()
+                        return [dict(r) for r in rows]
+            c.close()
+        except Exception:
+            pass
     return []
-
-import os
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-import os
-import random
-from flask import Flask, render_template, request, redirect, url_for, session
-from werkzeug.utils import secure_filename
-
-app = Flask(__name__)
-app.secret_key = 'carnival_secret_key_123'
-
-UPLOAD_FOLDER = 'static/uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-store_data = {
-    "whatsapp": "9647700000000",
-    "products": []
-}
-
-ADMIN_USER = "admin"
-ADMIN_PASS = "admin123"
-
-# قائمة الجوائز في عجلة الحظ
-WHEEL_PRIZES = [
-    {"id": 1, "name": "100 ماسة 💎", "chance": 10},
-    {"id": 2, "name": "هدية وردة 🌹", "chance": 30},
-    {"id": 3, "name": "إطار مميز 👑", "chance": 5},
-    {"id": 4, "name": "حظ أوفر 😢", "chance": 45},
-    {"id": 5, "name": "500 نقطة ⭐", "chance": 10}
-]
 
 @app.route('/')
 def index():

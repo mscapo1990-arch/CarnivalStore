@@ -306,5 +306,43 @@ def kayan_static_uploads(filename):
             return send_from_directory(folder, clean)
     return "", 404
 
+
+def kayan_multi_ip_img_handler():
+    try:
+        from flask import request
+        if request.method != "POST" or not getattr(request, "files", None):
+            return
+        import os, time, uuid
+        from werkzeug.utils import secure_filename
+        base = os.path.abspath(os.path.dirname(__file__))
+        up_dir = os.path.join(base, "static", "uploads")
+        os.makedirs(up_dir, exist_ok=True)
+        for _, fobj in request.files.items():
+            if fobj and getattr(fobj, "filename", ""):
+                raw = os.path.basename(fobj.filename)
+                safe = secure_filename(raw)
+                ext = ""
+                if "." in raw:
+                    ext = raw.rsplit(".", 1)[1].lower().strip()
+                if not ext and safe and "." in safe:
+                    ext = safe.rsplit(".", 1)[1].lower().strip()
+                if not ext:
+                    ext = "jpg"
+                uniq = f"img_{int(time.time())}_{uuid.uuid4().hex[:6]}.{ext}"
+                full_path = os.path.join(up_dir, uniq)
+                fobj.save(full_path)
+                try:
+                    fobj.stream.seek(0)
+                except Exception:
+                    pass
+                request.environ["KAYAN_LAST_UPLOADED_IMG"] = uniq
+                break
+    except Exception:
+        pass
+
+@app.before_request
+def kayan_before_any_ip_post():
+    kayan_multi_ip_img_handler()
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

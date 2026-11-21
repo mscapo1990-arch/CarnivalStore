@@ -236,5 +236,29 @@ def kayan_save_banner():
             pass
     return redirect(request.referrer or '/admin')
 
+
+@app.context_processor
+def kayan_inject_banner():
+    import os, glob, sqlite3
+    txt = ""
+    try:
+        base = os.path.abspath(os.path.dirname(__file__))
+        for db in dict.fromkeys(glob.glob(os.path.join(base, "*.db")) + glob.glob(os.path.join(base, "**", "*.db"), recursive=True)):
+            if not os.path.exists(db) or os.path.getsize(db) == 0:
+                continue
+            c = sqlite3.connect(db)
+            cur = c.cursor()
+            tables = [r[0] for r in cur.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+            if "ad_banners" in tables:
+                row = cur.execute("SELECT banner_text FROM ad_banners ORDER BY id DESC LIMIT 1").fetchone()
+                if row and row[0]:
+                    txt = str(row[0]).strip()
+                    c.close()
+                    break
+            c.close()
+    except Exception:
+        pass
+    return {"ad_banner": txt}
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

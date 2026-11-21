@@ -1,6 +1,7 @@
 
-from flask import Flask
+from flask import Flask, session
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "carnival-store-secret-2026")
 
 def _load_admin_products():
     import os, glob, sqlite3

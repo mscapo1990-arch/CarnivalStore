@@ -374,5 +374,133 @@ def kayan_sync_db_image_after_post(response):
         pass
     return response
 
+
+from functools import wraps
+from flask import session, render_template_string
+
+app.secret_key = os.environ.get("CARNIVAL_SECRET_KEY", "carnival_store_secret_key_2026")
+ADMIN_USERNAME = os.environ.get("CARNIVAL_ADMIN_USER", "admin")
+ADMIN_PASSWORD = os.environ.get("CARNIVAL_ADMIN_PASS", "Carnival@2026")
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("is_admin"):
+            return redirect(url_for("admin_login"))
+        return f(*args, **kwargs)
+    return decorated
+
+LOGIN_HTML = '''
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دخول الإدارة | كرنفال</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-white min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-bold text-amber-400">CARNIVAL | كرنفال</h1>
+      <p class="text-xs text-slate-400 mt-1">تسجيل الدخول إلى لوحة التحكم</p>
+    </div>
+    {% if error %}
+      <div class="bg-red-500/15 border border-red-500/40 text-red-300 text-xs rounded-xl p-3 mb-4 text-center">{{ error }}</div>
+    {% endif %}
+    <form method="POST" class="space-y-4">
+      <div>
+        <label class="block text-xs text-slate-300 mb-1">اسم المستخدم</label>
+        <input type="text" name="username" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
+      </div>
+      <div>
+        <label class="block text-xs text-slate-300 mb-1">كلمة المرور</label>
+        <input type="password" name="password" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
+      </div>
+      <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-xl text-sm transition">دخول اللوحة</button>
+    </form>
+    <div class="mt-5 text-center">
+      <a href="/" class="text-xs text-slate-400 hover:text-amber-400">العودة إلى المتجر</a>
+    </div>
+  </div>
+</body>
+</html>
+'''
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    error = None
+    if request.method == 'POST':
+        u = (request.form.get('username') or '').strip()
+        p = (request.form.get('password') or '').strip()
+        if u == ADMIN_USERNAME and p == ADMIN_PASSWORD:
+            session['is_admin'] = True
+            session['admin_user'] = u
+            return redirect('/admin')
+        error = "اسم المستخدم أو كلمة المرور غير صحيحة"
+    return render_template_string(LOGIN_HTML, error=error)
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.clear()
+    return redirect('/admin/login')
+
+def _ensure_product_ids():
+    prods = store_data.get("products", [])
+    for idx, item in enumerate(prods):
+        if not item.get("id"):
+            item["id"] = idx + 1
+    return prods
+
+def _save_upload_file(file_obj):
+    import time, uuid
+    up_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "static", "uploads")
+    os.makedirs(up_dir, exist_ok=True)
+    ext = os.path.splitext(file_obj.filename)[1].lower() or ".jpg"
+    fname = f"img_{int(time.time())}_{uuid.uuid4().hex[:6]}{ext}"
+    file_obj.save(os.path.join(up_dir, fname))
+    return "/static/uploads/" + fname
+
+@app.route('/admin', methods=['GET', 'POST'])
+@admin_required
+def admin_dashboard():
+    prods = _ensure_product_ids()
+    if request.method == 'POST':
+        action_type = (request.form.get('action_type') or 'add_product').strip()
+        if action_type == 'update_settings':
+            banner = (request.form.get('ad_banner') or '').strip()
+            wa = (request.form.get('whatsapp') or '').strip()
+            if banner:
+                store_data['ad_banner'] = banner
+            if wa:
+                store_data['whatsapp'] = wa
+            return redirect('/admin')
+        else:
+            name_val = (request.form.get('name') or '').strip()
+            price_val = (request.form.get('price') or '').strip()
+            cat_val = (request.form.get('category') or 'رجالي').strip()
+            img_url = "/store-image"
+            f = request.files.get('image') or request.files.get('photo') or request.files.get('file')
+            if f and getattr(f, 'filename', ''):
+                img_url = _save_upload_file(f)
+            next_id = max([int(x.get('id', i + 1)) for i, x in enumerate(prods)] + [0]) + 1
+            if name_val:
+                prods.append({
+                    "id": next_id,
+                    "name": name_val,
+                    "price": price_val or "0$",
+                    "category": cat_val,
+                    "image": img_url
+                })
+                store_data["products"] = prods
+            return redirect('/admin')
+    return render_template(
+        "admin.html",
+        products=prods,
+        ad_banner=store_data.get("ad_banner", ""),
+        whatsapp=store_data.get("whatsapp", ""),
+        admin_user=session.get("admin_user", ADMIN_USERNAME)
+    )
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

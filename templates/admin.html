@@ -19,12 +19,12 @@
     {% set list_items = products if (products is defined and products) else (items if (items is defined and items) else []) %}
     {% if list_items %}
       {% for p in list_items %}
-        {% set pid = p.id if p.id is defined else (p['id'] if p is mapping and 'id' in p else loop.index) %}
-        {% set pname = p.name if p.name is defined else (p['name'] if p is mapping and 'name' in p else (p.title if p.title is defined else 'منتج')) %}
-        {% set pimg = p.image if p.image is defined else (p['image'] if p is mapping and 'image' in p else '') %}
-        {% set pcode = p.code if p.code is defined else (p['code'] if p is mapping and 'code' in p and p['code'] else (loop.index * 2 - 1)) %}
-        {% set pad = p.ad_status if p.ad_status is defined else (p['ad_status'] if p is mapping and 'ad_status' in p and p['ad_status'] else (p.status if p.status is defined else 'متوفر')) %}
-        {% set pwa = p.whatsapp if p.whatsapp is defined else (p['whatsapp'] if p is mapping and 'whatsapp' in p and p['whatsapp'] else '') %}
+        {% set pid = p.id if p is defined and p.id is defined else (p['id'] if p is defined and p is mapping and 'id' in p else loop.index) %}
+        {% set pname = p.name if p is defined and p.name is defined else (p['name'] if p is defined and p is mapping and 'name' in p else (p.title if p.title is defined else 'منتج')) %}
+        {% set pimg = p.image if p is defined and p.image is defined else (p['image'] if p is defined and p is mapping and 'image' in p else '') %}
+        {% set pcode = p.code if p is defined and p.code is defined else (p['code'] if p is defined and p is mapping and 'code' in p and p['code'] else (loop.index * 2 - 1)) %}
+        {% set pad = p.ad_status if p is defined and p.ad_status is defined else (p['ad_status'] if p is defined and p is mapping and 'ad_status' in p and p['ad_status'] else (p.status if p is defined and p.status is defined else 'متوفر')) %}
+        {% set pwa = p.whatsapp if p is defined and p.whatsapp is defined else (p['whatsapp'] if p is defined and p is mapping and 'whatsapp' in p and p['whatsapp'] else '') %}
         {% set img_src = pimg if pimg and (pimg.startswith('http') or pimg.startswith('/')) else ('/static/uploads/' ~ pimg if pimg else '') %}
 
         <div class="kayan-strip-card" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:10px;background:#1e293b;border:1px solid #334155;min-width:240px;">

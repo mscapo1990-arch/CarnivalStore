@@ -177,5 +177,10 @@ def delete_product_item(pid):
         print("delete err:", e)
     return redirect(request.referrer or '/admin')
 
+
+@app.errorhandler(500)
+def handle_500_err(e):
+    return f"<h3>تنبيه في التطبيق</h3><pre>{e}</pre>", 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

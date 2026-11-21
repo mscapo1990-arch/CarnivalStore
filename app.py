@@ -495,7 +495,7 @@ def admin_dashboard():
                     "image": img_url
                 })
                 store_data["products"] = prods
-            _save_store_state()
+                _save_store_state()
             return redirect('/admin')
     return render_template(
         "admin.html",
@@ -533,7 +533,7 @@ def admin_upload_banner():
         if f and getattr(f, "filename", ""):
             imgs.append(_save_upload_file(f))
     store_data["banner_images"] = imgs
-            _save_store_state()
+    _save_store_state()
     return redirect("/admin")
 
 @app.route('/admin/banner/delete', methods=['POST'])

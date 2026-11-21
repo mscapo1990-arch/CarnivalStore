@@ -34,6 +34,7 @@ WHEEL_PRIZES = [
 @app.route('/')
 def index():
     _load_store_state()
+    _load_store_state()
     category = request.args.get('category', 'الكل')
     products = store_data["products"]
     if category != 'الكل':
@@ -497,6 +498,7 @@ def admin_dashboard():
                     "whatsapp": prod_wa,
                     "image": img_url
                 })
+                _save_store_state()
                 _save_store_state()
                 store_data["products"] = prods
                 _save_store_state()

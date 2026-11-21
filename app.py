@@ -33,8 +33,8 @@ WHEEL_PRIZES = [
 
 @app.route('/')
 def index():
-    _load_store_state()
-    _load_store_state()
+    _load_abs_state()
+    _load_abs_state()
     category = request.args.get('category', 'الكل')
     products = store_data["products"]
     if category != 'الكل':
@@ -62,6 +62,7 @@ def spin_wheel():
 def login():
     error = None
     if request.method == 'POST':
+        _load_abs_state()
         if request.form.get('username') == ADMIN_USER and request.form.get('password') == ADMIN_PASS:
             session['logged_in'] = True
             return redirect(url_for('admin'))
@@ -76,11 +77,12 @@ def logout():
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
-    _load_store_state()
+    _load_abs_state()
     if not session.get('logged_in'):
         return redirect(url_for('login'))
         
     if request.method == 'POST':
+        _load_abs_state()
         action = request.form.get('action')
         if action == 'update_whatsapp':
             store_data["whatsapp"] = request.form.get('whatsapp')
@@ -95,7 +97,7 @@ def admin():
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 image_url = url_for('static', filename=f'uploads/{filename}')
-                _load_store_state()
+                _load_abs_state()
                 store_data["products"].append({
                 "id": len(store_data["products"]) + 1,
                 "name": name,
@@ -435,6 +437,7 @@ LOGIN_HTML = '''
 def admin_login():
     error = None
     if request.method == 'POST':
+        _load_abs_state()
         u = (request.form.get('username') or '').strip()
         p = (request.form.get('password') or '').strip()
         if u == ADMIN_USERNAME and p == ADMIN_PASSWORD:
@@ -470,6 +473,7 @@ def _save_upload_file(file_obj):
 def admin_dashboard():
     prods = _ensure_product_ids()
     if request.method == 'POST':
+        _load_abs_state()
         action_type = (request.form.get('action_type') or 'add_product').strip()
         if action_type == 'update_settings':
             banner = (request.form.get('ad_banner') or '').strip()
@@ -498,10 +502,10 @@ def admin_dashboard():
                     "whatsapp": prod_wa,
                     "image": img_url
                 })
-                _save_store_state()
-                _save_store_state()
+                _save_abs_state()
+                _save_abs_state()
                 store_data["products"] = prods
-                _save_store_state()
+                _save_abs_state()
             return redirect('/admin')
     return render_template(
         "admin.html",
@@ -539,7 +543,7 @@ def admin_upload_banner():
         if f and getattr(f, "filename", ""):
             imgs.append(_save_upload_file(f))
     store_data["banner_images"] = imgs
-    _save_store_state()
+    _save_abs_state()
     return redirect("/admin")
 
 @app.route('/admin/banner/delete', methods=['POST'])
@@ -554,7 +558,7 @@ def admin_delete_banner():
 
 _STORE_JSON_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)), "carnival_persist.json")
 
-def _save_store_state():
+def _save_abs_state():
     try:
         payload = {
             "products": store_data.get("products", []),
@@ -567,7 +571,7 @@ def _save_store_state():
     except Exception:
         pass
 
-def _load_store_state():
+def _load_abs_state():
     try:
         if os.path.isfile(_STORE_JSON_PATH):
             with open(_STORE_JSON_PATH, "r", encoding="utf-8") as f:
@@ -584,11 +588,11 @@ def _load_store_state():
     except Exception:
         pass
 
-_load_store_state()
+_load_abs_state()
 
 _STORE_JSON_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)), "carnival_persist.json")
 
-def _save_store_state():
+def _save_abs_state():
     try:
         payload = {
             "products": store_data.get("products", []),
@@ -601,7 +605,7 @@ def _save_store_state():
     except Exception:
         pass
 
-def _load_store_state():
+def _load_abs_state():
     try:
         if os.path.isfile(_STORE_JSON_PATH):
             with open(_STORE_JSON_PATH, "r", encoding="utf-8") as f:
@@ -621,9 +625,9 @@ def _load_store_state():
 @app.before_request
 def _sync_store_before_request():
     if request.method == "GET":
-        _load_store_state()
+        _load_abs_state()
 
-_load_store_state()
+_load_abs_state()
 
 @app.route('/store-image')
 @app.route('/store-image/<path:subpath>')
@@ -673,5 +677,40 @@ def _sync_read_products():
         pass
     return store_data.get("products", [])
 
+
+_ABS_DIR = os.path.dirname(os.path.abspath(__file__))
+_ABS_PERSIST_FILE = os.path.join(_ABS_DIR, "carnival_persist.json")
+
+def _save_abs_state():
+    try:
+        data = {
+            "products": store_data.get("products", []),
+            "banner_images": store_data.get("banner_images", []),
+            "whatsapp": store_data.get("whatsapp", ""),
+            "ad_banner": store_data.get("ad_banner", "")
+        }
+        with open(_ABS_PERSIST_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+def _load_abs_state():
+    try:
+        if os.path.isfile(_ABS_PERSIST_FILE):
+            with open(_ABS_PERSIST_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                if isinstance(data.get("products"), list):
+                    store_data["products"] = data["products"]
+                if isinstance(data.get("banner_images"), list):
+                    store_data["banner_images"] = data["banner_images"]
+                if "whatsapp" in data and data["whatsapp"] is not None:
+                    store_data["whatsapp"] = data["whatsapp"]
+                if "ad_banner" in data and data["ad_banner"] is not None:
+                    store_data["ad_banner"] = data["ad_banner"]
+    except Exception:
+        pass
+
+_load_abs_state()
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

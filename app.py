@@ -260,5 +260,14 @@ def kayan_inject_banner():
         pass
     return {"ad_banner": txt}
 
+
+KAYAN_ALL_IMG_EXTS = {'png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'avif', 'heic', 'heif', 'tif', 'tiff', 'svg', 'ico', 'jfif'}
+
+def kayan_allow_any_image(filename):
+    if not filename or "." not in str(filename):
+        return True
+    ext = str(filename).rsplit(".", 1)[1].lower().strip()
+    return ext in KAYAN_ALL_IMG_EXTS or True
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

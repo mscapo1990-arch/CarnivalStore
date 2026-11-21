@@ -579,5 +579,44 @@ def _load_store_state():
         pass
 
 _load_store_state()
+
+_STORE_JSON_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)), "carnival_persist.json")
+
+def _save_store_state():
+    try:
+        payload = {
+            "products": store_data.get("products", []),
+            "banner_images": store_data.get("banner_images", []),
+            "whatsapp": store_data.get("whatsapp", ""),
+            "ad_banner": store_data.get("ad_banner", "")
+        }
+        with open(_STORE_JSON_PATH, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+def _load_store_state():
+    try:
+        if os.path.isfile(_STORE_JSON_PATH):
+            with open(_STORE_JSON_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                if isinstance(data.get("products"), list):
+                    store_data["products"] = data["products"]
+                if isinstance(data.get("banner_images"), list):
+                    store_data["banner_images"] = data["banner_images"]
+                if "whatsapp" in data and data["whatsapp"] is not None:
+                    store_data["whatsapp"] = data["whatsapp"]
+                if "ad_banner" in data and data["ad_banner"] is not None:
+                    store_data["ad_banner"] = data["ad_banner"]
+    except Exception:
+        pass
+
+@app.before_request
+def _sync_store_before_request():
+    if request.method == "GET":
+        _load_store_state()
+
+_load_store_state()
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

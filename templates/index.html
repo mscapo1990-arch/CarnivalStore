@@ -14,7 +14,32 @@
 </div>
 {% endif %}
 
-    <header class="p-4 flex justify-between items-center border-b border-slate-800">
+    {% if banner_images %}
+<div id="carnival-banner-slider" class="relative w-full max-w-4xl mx-auto mt-3 px-4">
+  <div class="relative overflow-hidden rounded-2xl border border-amber-500/40 bg-slate-800 h-36 sm:h-48 shadow-lg">
+    {% for b_img in banner_images %}
+    <img src="{{ b_img }}" class="carnival-slide w-full h-full object-cover absolute inset-0 transition-all duration-700 ease-in-out {{ 'opacity-100 scale-100' if loop.first else 'opacity-0 scale-105 pointer-events-none' }}" alt="بنر كرنفال">
+    {% endfor %}
+  </div>
+</div>
+<script>
+(function() {
+  var slides = document.querySelectorAll('#carnival-banner-slider .carnival-slide');
+  if (slides.length > 1) {
+    var idx = 0;
+    setInterval(function() {
+      slides[idx].classList.remove('opacity-100', 'scale-100');
+      slides[idx].classList.add('opacity-0', 'scale-105', 'pointer-events-none');
+      idx = (idx + 1) % slides.length;
+      slides[idx].classList.remove('opacity-0', 'scale-105', 'pointer-events-none');
+      slides[idx].classList.add('opacity-100', 'scale-100');
+    }, 3200);
+  }
+})();
+</script>
+{% endif %}
+
+<header class="p-4 flex justify-between items-center border-b border-slate-800">
         <h1 class="text-xl font-bold text-amber-400">CARNIVAL | كرنفال</h1>
     </header>
 
@@ -40,7 +65,7 @@
                         <p class="text-amber-400 font-bold text-sm my-1">{{ p.price }}</p>
                         <span class="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded">{{ p.category }}</span>
                     </div>
-                    <a href="https://wa.me/{{ whatsapp }}?text=مرحباً، اريد طلب المنتج: {{ p.name }} - السعر: {{ p.price }}" target="_blank" class="mt-3 block text-center bg-green-600 text-white py-1.5 rounded-lg text-xs font-bold">طلب عبر الواتساب</a>
+                    <a href="https://wa.me/{{ (p.whatsapp or whatsapp)|replace('+', '') }}?text=مرحباً، اريد طلب المنتج: {{ p.name }} - السعر: {{ p.price }}" target="_blank" class="mt-3 block text-center bg-green-600 text-white py-1.5 rounded-lg text-xs font-bold">طلب عبر الواتساب</a>
                 </div>
                 {% endfor %}
             </div>

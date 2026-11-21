@@ -37,7 +37,7 @@ def index():
     products = store_data["products"]
     if category != 'الكل':
         products = [p for p in products if p.get('category') == category]
-    return render_template('index.html', products=products, whatsapp=store_data["whatsapp"], current_category=category)
+    return render_template('index.html', products=products, whatsapp=store_data.get("whatsapp", ""), banner_images=_get_banner_images(), current_category=category)
 
 @app.route('/wheel')
 def wheel_page():
@@ -485,11 +485,13 @@ def admin_dashboard():
                 img_url = _save_upload_file(f)
             next_id = max([int(x.get('id', i + 1)) for i, x in enumerate(prods)] + [0]) + 1
             if name_val:
+                prod_wa = re.sub(r"[^0-9+]", "", (request.form.get("whatsapp") or "").strip())
                 prods.append({
                     "id": next_id,
                     "name": name_val,
                     "price": price_val or "0$",
                     "category": cat_val,
+                    "whatsapp": prod_wa,
                     "image": img_url
                 })
                 store_data["products"] = prods
@@ -497,10 +499,49 @@ def admin_dashboard():
     return render_template(
         "admin.html",
         products=prods,
-        ad_banner=store_data.get("ad_banner", ""),
+        banner_images=_get_banner_images(),
         whatsapp=store_data.get("whatsapp", ""),
         admin_user=session.get("admin_user", ADMIN_USERNAME)
     )
+
+
+def _get_banner_images():
+    imgs = store_data.get("banner_images", [])
+    if not isinstance(imgs, list):
+        imgs = []
+    up_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "static", "uploads")
+    valid = []
+    for item in imgs:
+        if isinstance(item, str) and item.strip():
+            base = os.path.basename(item.split("?")[0])
+            if item.startswith(("http://", "https://", "data:")):
+                valid.append(item)
+            elif base and os.path.isfile(os.path.join(up_dir, base)):
+                valid.append("/static/uploads/" + base)
+    store_data["banner_images"] = valid
+    return valid
+
+
+@app.route('/admin/banner/upload', methods=['POST'])
+def admin_upload_banner():
+    if not session.get("is_admin"):
+        return redirect(url_for("admin_login"))
+    imgs = _get_banner_images()
+    files = request.files.getlist("banner_images") or request.files.getlist("banner_image") or request.files.getlist("image")
+    for f in files:
+        if f and getattr(f, "filename", ""):
+            imgs.append(_save_upload_file(f))
+    store_data["banner_images"] = imgs
+    return redirect("/admin")
+
+@app.route('/admin/banner/delete', methods=['POST'])
+def admin_delete_banner():
+    if not session.get("is_admin"):
+        return redirect(url_for("admin_login"))
+    target_img = (request.form.get("banner_url") or "").strip()
+    imgs = [x for x in _get_banner_images() if x != target_img]
+    store_data["banner_images"] = imgs
+    return redirect("/admin")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

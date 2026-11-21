@@ -379,8 +379,8 @@ from functools import wraps
 from flask import session, render_template_string
 
 app.secret_key = os.environ.get("CARNIVAL_SECRET_KEY", "carnival_store_secret_key_2026")
-ADMIN_USERNAME = os.environ.get("CARNIVAL_ADMIN_USER", "admin")
-ADMIN_PASSWORD = os.environ.get("CARNIVAL_ADMIN_PASS", "Carnival@2026")
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "123456"
 
 def admin_required(f):
     @wraps(f)
@@ -495,6 +495,7 @@ def admin_dashboard():
                     "image": img_url
                 })
                 store_data["products"] = prods
+            _save_store_state()
             return redirect('/admin')
     return render_template(
         "admin.html",
@@ -532,6 +533,7 @@ def admin_upload_banner():
         if f and getattr(f, "filename", ""):
             imgs.append(_save_upload_file(f))
     store_data["banner_images"] = imgs
+            _save_store_state()
     return redirect("/admin")
 
 @app.route('/admin/banner/delete', methods=['POST'])
@@ -543,5 +545,39 @@ def admin_delete_banner():
     store_data["banner_images"] = imgs
     return redirect("/admin")
 
+
+_STORE_JSON_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)), "carnival_persist.json")
+
+def _save_store_state():
+    try:
+        payload = {
+            "products": store_data.get("products", []),
+            "banner_images": store_data.get("banner_images", []),
+            "whatsapp": store_data.get("whatsapp", ""),
+            "ad_banner": store_data.get("ad_banner", "")
+        }
+        with open(_STORE_JSON_PATH, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+def _load_store_state():
+    try:
+        if os.path.isfile(_STORE_JSON_PATH):
+            with open(_STORE_JSON_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                if isinstance(data.get("products"), list) and data["products"]:
+                    store_data["products"] = data["products"]
+                if isinstance(data.get("banner_images"), list):
+                    store_data["banner_images"] = data["banner_images"]
+                if data.get("whatsapp"):
+                    store_data["whatsapp"] = data["whatsapp"]
+                if data.get("ad_banner"):
+                    store_data["ad_banner"] = data["ad_banner"]
+    except Exception:
+        pass
+
+_load_store_state()
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -54,5 +54,17 @@
     <footer class="text-center py-6 text-xs text-slate-500 border-t border-slate-800 mt-10">
         CARNIVAL Store © 2026
     </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('img').forEach(function(img) {
+    var src = (img.getAttribute('src') || '').trim();
+    if (src && !src.startsWith('http') && !src.startsWith('/') && !src.startsWith('data:')) {
+      img.setAttribute('src', '/static/uploads/' + src);
+    }
+  });
+});
+</script>
+
 </body>
 </html>

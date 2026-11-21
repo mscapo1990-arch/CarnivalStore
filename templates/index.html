@@ -34,7 +34,7 @@
             <div class="grid grid-cols-2 gap-4">
                 {% for p in products %}
                 <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col justify-between">
-                    <img  src="{{ p.image }}" class="w-full h-36 object-cover rounded-lg mb-2">
+                    <img src="/static/uploads/{{ p.image.split(\'/\')[-1] if p.image else \'\' }}" class="w-full h-36 object-cover rounded-lg mb-2">
                     <div>
                         <h3 class="font-bold text-sm truncate">{{ p.name }}</h3>
                         <p class="text-amber-400 font-bold text-sm my-1">{{ p.price }}</p>

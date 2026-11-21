@@ -109,13 +109,18 @@ let stripCompact = false;
 function toggleStripView() {
   stripCompact = !stripCompact;
   const box = document.getElementById('kayan-strip-items');
+  const strip = document.getElementById('kayan-top-strip');
   if (!box) return;
   if (stripCompact) {
     box.style.flexDirection = 'row';
     box.style.overflowX = 'auto';
+    box.style.gap = '10px';
+    if (strip) strip.style.borderColor = '#38bdf8';
   } else {
     box.style.flexDirection = 'column';
     box.style.overflowX = 'visible';
+    box.style.gap = '8px';
+    if (strip) strip.style.borderColor = '#f59e0b';
   }
 }
 

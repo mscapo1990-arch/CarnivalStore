@@ -1,3 +1,21 @@
+
+def _load_admin_products():
+    try:
+        import sqlite3
+        c = sqlite3.connect('store.db')
+        c.row_factory = sqlite3.Row
+        cur = c.cursor()
+        tables = [r[0] for r in cur.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+        for t in tables:
+            if "product" in t.lower():
+                rows = cur.execute(f"SELECT * FROM {t} ORDER BY id DESC").fetchall()
+                c.close()
+                return [dict(r) for r in rows]
+        c.close()
+    except Exception:
+        pass
+    return []
+
 import os
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
@@ -100,7 +118,7 @@ def admin():
                 "image": image_url,
                 "desc": desc
             })
-    return render_template('admin.html', store_data=store_data)
+    return render_template('admin.html', products=_load_admin_products(), store_data=store_data)
 
 
 @app.route('/toggle_status/<int:pid>', methods=['POST'])

@@ -636,5 +636,36 @@ def store_any_image(subpath=None):
         return send_from_directory(up, files[0])
     return '', 404
 
+
+_PRODUCTS_SYNC_FILE = os.path.join(os.path.abspath(os.path.dirname(__file__)), "carnival_persist.json")
+
+def _sync_write_products():
+    try:
+        prods = store_data.get("products", [])
+        data = {}
+        if os.path.isfile(_PRODUCTS_SYNC_FILE):
+            with open(_PRODUCTS_SYNC_FILE, "r", encoding="utf-8") as f:
+                loaded = json.load(f)
+                if isinstance(loaded, dict):
+                    data = loaded
+        data["products"] = prods
+        data["banner_images"] = store_data.get("banner_images", [])
+        data["whatsapp"] = store_data.get("whatsapp", "")
+        with open(_PRODUCTS_SYNC_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+def _sync_read_products():
+    try:
+        if os.path.isfile(_PRODUCTS_SYNC_FILE):
+            with open(_PRODUCTS_SYNC_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, dict) and isinstance(data.get("products"), list):
+                store_data["products"] = data["products"]
+    except Exception:
+        pass
+    return store_data.get("products", [])
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

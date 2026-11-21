@@ -33,10 +33,10 @@ WHEEL_PRIZES = [
 
 @app.route('/')
 def index():
-    _load_final_state()
-    _load_abs_state()
-    _load_abs_state()
-    _load_abs_state()
+    _safe_load_state()
+    _safe_load_state()
+    _safe_load_state()
+    _safe_load_state()
     category = request.args.get('category', 'الكل')
     products = store_data["products"]
     if category != 'الكل':
@@ -64,7 +64,7 @@ def spin_wheel():
 def login():
     error = None
     if request.method == 'POST':
-        _load_abs_state()
+        _safe_load_state()
         if request.form.get('username') == ADMIN_USER and request.form.get('password') == ADMIN_PASS:
             session['logged_in'] = True
             return redirect(url_for('admin'))
@@ -79,13 +79,13 @@ def logout():
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
-    _load_abs_state()
-    _load_abs_state()
+    _safe_load_state()
+    _safe_load_state()
     if not session.get('logged_in'):
         return redirect(url_for('login'))
         
     if request.method == 'POST':
-        _load_abs_state()
+        _safe_load_state()
         action = request.form.get('action')
         if action == 'update_whatsapp':
             store_data["whatsapp"] = request.form.get('whatsapp')
@@ -100,7 +100,7 @@ def admin():
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 image_url = url_for('static', filename=f'uploads/{filename}')
-                _load_abs_state()
+                _safe_load_state()
                 store_data["products"].append({
                 "id": len(store_data["products"]) + 1,
                 "name": name,
@@ -440,7 +440,7 @@ LOGIN_HTML = '''
 def admin_login():
     error = None
     if request.method == 'POST':
-        _load_abs_state()
+        _safe_load_state()
         u = (request.form.get('username') or '').strip()
         p = (request.form.get('password') or '').strip()
         if u == ADMIN_USERNAME and p == ADMIN_PASSWORD:
@@ -476,7 +476,7 @@ def _save_upload_file(file_obj):
 def admin_dashboard():
     prods = _ensure_product_ids()
     if request.method == 'POST':
-        _load_abs_state()
+        _safe_load_state()
         action_type = (request.form.get('action_type') or 'add_product').strip()
         if action_type == 'update_settings':
             banner = (request.form.get('ad_banner') or '').strip()
@@ -505,10 +505,10 @@ def admin_dashboard():
                     "whatsapp": prod_wa,
                     "image": img_url
                 })
-                _save_abs_state()
-                _save_abs_state()
+                _safe_save_state()
+                _safe_save_state()
                 store_data["products"] = prods
-                _save_abs_state()
+                _safe_save_state()
             return redirect('/admin')
     return render_template(
         "admin.html",
@@ -546,7 +546,7 @@ def admin_upload_banner():
         if f and getattr(f, "filename", ""):
             imgs.append(_save_upload_file(f))
     store_data["banner_images"] = imgs
-    _save_abs_state()
+    _safe_save_state()
     return redirect("/admin")
 
 @app.route('/admin/banner/delete', methods=['POST'])
@@ -561,7 +561,7 @@ def admin_delete_banner():
 
 _STORE_JSON_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)), "carnival_persist.json")
 
-def _save_abs_state():
+def _safe_save_state():
     try:
         payload = {
             "products": store_data.get("products", []),
@@ -574,7 +574,7 @@ def _save_abs_state():
     except Exception:
         pass
 
-def _load_abs_state():
+def _safe_load_state():
     try:
         if os.path.isfile(_STORE_JSON_PATH):
             with open(_STORE_JSON_PATH, "r", encoding="utf-8") as f:
@@ -591,11 +591,11 @@ def _load_abs_state():
     except Exception:
         pass
 
-_load_abs_state()
+_safe_load_state()
 
 _STORE_JSON_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)), "carnival_persist.json")
 
-def _save_abs_state():
+def _safe_save_state():
     try:
         payload = {
             "products": store_data.get("products", []),
@@ -608,7 +608,7 @@ def _save_abs_state():
     except Exception:
         pass
 
-def _load_abs_state():
+def _safe_load_state():
     try:
         if os.path.isfile(_STORE_JSON_PATH):
             with open(_STORE_JSON_PATH, "r", encoding="utf-8") as f:
@@ -628,9 +628,9 @@ def _load_abs_state():
 @app.before_request
 def _sync_store_before_request():
     if request.method == "GET":
-        _load_abs_state()
+        _safe_load_state()
 
-_load_abs_state()
+_safe_load_state()
 
 @app.route('/store-image')
 @app.route('/store-image/<path:subpath>')
@@ -684,7 +684,7 @@ def _sync_read_products():
 _ABS_DIR = os.path.dirname(os.path.abspath(__file__))
 _ABS_PERSIST_FILE = os.path.join(_ABS_DIR, "carnival_persist.json")
 
-def _save_abs_state():
+def _safe_save_state():
     try:
         data = {
             "products": store_data.get("products", []),
@@ -697,7 +697,7 @@ def _save_abs_state():
     except Exception:
         pass
 
-def _load_abs_state():
+def _safe_load_state():
     try:
         if os.path.isfile(_ABS_PERSIST_FILE):
             with open(_ABS_PERSIST_FILE, "r", encoding="utf-8") as f:
@@ -714,7 +714,7 @@ def _load_abs_state():
     except Exception:
         pass
 
-_load_abs_state()
+_safe_load_state()
 
 def _append_product_from_form(form, files):
     name = (form.get("name") or form.get("product_name") or form.get("title") or "").strip()
@@ -736,7 +736,7 @@ def _append_product_from_form(form, files):
         f.save(os.path.join(up_dir, fname))
         img_url = f"/static/uploads/{fname}"
 
-    _load_abs_state()
+    _safe_load_state()
     prods = store_data.get("products")
     if not isinstance(prods, list):
         prods = []
@@ -752,48 +752,10 @@ def _append_product_from_form(form, files):
         "image": img_url,
         "status": "نشط"
     })
-    _save_abs_state()
+    _safe_save_state()
     return True
 
 
-_FINAL_JSON = os.path.join(os.path.dirname(os.path.abspath(__file__)), "carnival_persist.json")
-
-def _save_final_state():
-    try:
-        data = {
-            "products": store_data.get("products", []),
-            "banner_images": store_data.get("banner_images", []),
-            "whatsapp": store_data.get("whatsapp", ""),
-            "ad_banner": store_data.get("ad_banner", "")
-        }
-        with open(_FINAL_JSON, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-    except Exception:
-        pass
-
-def _load_final_state():
-    try:
-        if os.path.isfile(_FINAL_JSON):
-            with open(_FINAL_JSON, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            if isinstance(data, dict):
-                if isinstance(data.get("products"), list):
-                    store_data["products"] = data["products"]
-                if isinstance(data.get("banner_images"), list):
-                    store_data["banner_images"] = data["banner_images"]
-                if "whatsapp" in data and data["whatsapp"] is not None:
-                    store_data["whatsapp"] = data["whatsapp"]
-                if "ad_banner" in data and data["ad_banner"] is not None:
-                    store_data["ad_banner"] = data["ad_banner"]
-    except Exception:
-        pass
-
-@app.route('/admin/add_product', methods=['POST'])
-def admin_add_product_direct():
-    _load_final_state()
-    name = (request.form.get('name') or request.form.get('product_name') or request.form.get('title') or '').strip()
-    if not name:
-        return redirect('/admin')
     price = (request.form.get('price') or '0$').strip() or '0$'
     category = (request.form.get('category') or 'عام').strip() or 'عام'
     wa = (request.form.get('whatsapp') or request.form.get('product_whatsapp') or store_data.get('whatsapp') or '').strip()
@@ -823,9 +785,96 @@ def admin_add_product_direct():
         'image': img_url,
         'status': 'نشط'
     })
-    _save_final_state()
+    _safe_save_state()
     return redirect('/admin')
 
-_load_final_state()
+_safe_load_state()
+
+_SAFE_JSON = os.path.join(os.path.dirname(os.path.abspath(__file__)), "carnival_persist.json")
+
+def _safe_save_state():
+    try:
+        sd = globals().get("store_data")
+        if not isinstance(sd, dict):
+            return
+        data = {
+            "products": sd.get("products", []),
+            "banner_images": sd.get("banner_images", []),
+            "whatsapp": sd.get("whatsapp", ""),
+            "ad_banner": sd.get("ad_banner", "")
+        }
+        with open(_SAFE_JSON, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+def _safe_load_state():
+    try:
+        sd = globals().get("store_data")
+        if not isinstance(sd, dict):
+            return
+        if os.path.isfile(_SAFE_JSON):
+            with open(_SAFE_JSON, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                if isinstance(data.get("products"), list) and len(data["products"]) > 0:
+                    sd["products"] = data["products"]
+                if isinstance(data.get("banner_images"), list):
+                    sd["banner_images"] = data["banner_images"]
+                if "whatsapp" in data and data["whatsapp"] is not None:
+                    sd["whatsapp"] = data["whatsapp"]
+                if "ad_banner" in data and data["ad_banner"] is not None:
+                    sd["ad_banner"] = data["ad_banner"]
+    except Exception:
+        pass
+
+@app.route('/admin/add_product', methods=['POST'])
+def admin_add_product_safe():
+    try:
+        _safe_load_state()
+        name = (request.form.get('name') or request.form.get('product_name') or request.form.get('title') or '').strip()
+        if not name:
+            return redirect('/admin')
+        price = (request.form.get('price') or '0$').strip() or '0$'
+        category = (request.form.get('category') or 'عام').strip() or 'عام'
+        sd = globals().get("store_data")
+        if not isinstance(sd, dict):
+            sd = {"products": []}
+            globals()["store_data"] = sd
+        wa = (request.form.get('whatsapp') or request.form.get('product_whatsapp') or sd.get('whatsapp') or '').strip()
+
+        img_url = ''
+        f = request.files.get('image') or request.files.get('product_image') or request.files.get('file')
+        if f and getattr(f, 'filename', ''):
+            from werkzeug.utils import secure_filename
+            import time
+            up_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
+            os.makedirs(up_dir, exist_ok=True)
+            safe = secure_filename(f.filename) or 'product.jpg'
+            fname = f"{int(time.time())}_{safe}"
+            f.save(os.path.join(up_dir, fname))
+            img_url = f"/static/uploads/{fname}"
+
+        prods = sd.get('products')
+        if not isinstance(prods, list):
+            prods = []
+            sd['products'] = prods
+
+        next_id = max([int(p.get('id', 0)) for p in prods if isinstance(p, dict)] + [0]) + 1
+        prods.append({
+            'id': next_id,
+            'name': name,
+            'price': price,
+            'category': category,
+            'whatsapp': wa,
+            'image': img_url,
+            'status': 'نشط'
+        })
+        _safe_save_state()
+    except Exception:
+        pass
+    return redirect('/admin')
+
+_safe_load_state()
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

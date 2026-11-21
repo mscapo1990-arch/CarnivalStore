@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, session
+from flask import redirect, url_for, Flask, session
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "carnival-store-secret-2026")
 
